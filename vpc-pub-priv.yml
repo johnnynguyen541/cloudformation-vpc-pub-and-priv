@@ -1,0 +1,60 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  Udacity 3-2-9 - Challenge 2
+  AWS CloudFormation script that creates VPC with Private and Public Subnet
+
+Parameters:
+
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: Default Environmnent Name
+
+Resources:
+  # Resources go here
+  MainVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      # Properties go here
+  INternetGW:
+    Type: AWS::EC2::VPC
+    Properties:
+      # Properties go here
+  MainVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      # Properties go here
+  MainVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      # Properties go here
+  MainVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      # Properties go here
+  MainVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      # Properties go here
+  MainVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      # Properties go here
+  MainVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      # Properties go here
+  MainVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      # Properties go here
+  MainVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      # Properties go here
+
+Outputs: 
+  # Outputs go here
+...
