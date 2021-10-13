@@ -1,1 +1,95 @@
-# Insert Example CLI
+# Create Stack Called "priv-pub-demo"
+
+$ ./create.sh priv-pub-demo vpc-pub-priv.yml vpc-pub-priv-parameters.json 
+Correct number of parameters
+StackId: arn:aws:cloudformation:us-west-2:268145795447:stack/priv-pub-demo/54aee850-2bfa-11ec-9094-0ab94e84fdab
+
+# Describe Stack Called "priv-pub-demo" - IN PROGRESS
+$ aws cloudformation describe-stacks --stack-name priv-pub-demo
+Stacks:
+- Capabilities:
+  - CAPABILITY_IAM
+  - CAPABILITY_NAMED_IAM
+  CreationTime: '2021-10-13T07:51:10.482000+00:00'
+  Description: 'Udacity 3-3-9 - Challenge 2 AWS CloudFormation script that creates
+    VPC with Private and Public Subnet
+
+    '
+  DisableRollback: false
+  DriftInformation:
+    StackDriftStatus: NOT_CHECKED
+  EnableTerminationProtection: false
+  NotificationARNs: []
+  Parameters:
+  - ParameterKey: PublicSubnetCIDR
+    ParameterValue: 10.0.1.0/24
+  - ParameterKey: PrivateSubnetCIDR
+    ParameterValue: 10.0.2.0/24
+  - ParameterKey: VpcCIDR
+    ParameterValue: 10.0.0.0/16
+  - ParameterKey: EnvironmentName
+    ParameterValue: U3-3-9
+  RollbackConfiguration: {}
+  StackId: arn:aws:cloudformation:us-west-2:268145795447:stack/priv-pub-demo/54aee850-2bfa-11ec-9094-0ab94e84fdab
+  StackName: priv-pub-demo
+  StackStatus: CREATE_IN_PROGRESS
+  Tags: []
+
+# Describe Stack Called "priv-pub-demo" - COMPLETE
+$ aws cloudformation describe-stacks --stack-name priv-pub-demo
+Stacks:
+- Capabilities:
+  - CAPABILITY_IAM
+  - CAPABILITY_NAMED_IAM
+  CreationTime: '2021-10-13T07:51:10.482000+00:00'
+  Description: 'Udacity 3-3-9 - Challenge 2 AWS CloudFormation script that creates
+    VPC with Private and Public Subnet
+
+    '
+  DisableRollback: false
+  DriftInformation:
+    StackDriftStatus: NOT_CHECKED
+  EnableTerminationProtection: false
+  NotificationARNs: []
+  Outputs:
+  - Description: A reference to the created VPC
+    ExportName: U3-3-9-MainVPC-ID
+    OutputKey: MainVPC
+    OutputValue: vpc-0bb5bdd1098bd1d70
+  - Description: Public Routing Table
+    ExportName: U3-3-9-PublicRouteTable-ID
+    OutputKey: PublicRouteTable
+    OutputValue: rtb-047f0aa065f8799ac
+  - Description: Private Routing Table
+    ExportName: U3-3-9-PrivateRouteTable-ID
+    OutputKey: PrivateRouteTable
+    OutputValue: rtb-0bd093ded1a49c03e
+  - Description: Private Subnet 1
+    ExportName: U3-3-9-PrivateSubnet1-ID
+    OutputKey: PrivateSubnet1
+    OutputValue: subnet-037769216b50b7b47
+  - Description: A reference to the created Internet Gateway
+    ExportName: U3-3-9-InternetGW-ID
+    OutputKey: InternetGW
+    OutputValue: igw-09a5feaaa790f4342
+  - Description: Public Subnet 1
+    ExportName: U3-3-9-PublicSubnet1-ID
+    OutputKey: PublicSubnet1
+    OutputValue: subnet-08c9d5f5b44c892d2
+  Parameters:
+  - ParameterKey: PublicSubnetCIDR
+    ParameterValue: 10.0.1.0/24
+  - ParameterKey: PrivateSubnetCIDR
+    ParameterValue: 10.0.2.0/24
+  - ParameterKey: VpcCIDR
+    ParameterValue: 10.0.0.0/16
+  - ParameterKey: EnvironmentName
+    ParameterValue: U3-3-9
+  RollbackConfiguration: {}
+  StackId: arn:aws:cloudformation:us-west-2:268145795447:stack/priv-pub-demo/54aee850-2bfa-11ec-9094-0ab94e84fdab
+  StackName: priv-pub-demo
+  StackStatus: CREATE_COMPLETE
+  Tags: []
+
+# Delete Stack Called "priv-pub-demo"
+$ aws cloudformation delete-stack --stack-name priv-pub-demo

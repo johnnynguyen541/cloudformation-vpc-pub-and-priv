@@ -17,7 +17,7 @@ Simple AWS CloudFormation script that will create vpc with private and public su
 * Creates NAT Gateway with Elastic IP on Public
 * Creates 2 Routing Tables for Public/Private
     * Public sends 0.0.0.0/0 to Internet Gateway
-    * Private sends 0.0.0.0/0 to NATE Gateway
+    * Private sends 0.0.0.0/0 to NAT Gateway
 
 ## Project Files
 

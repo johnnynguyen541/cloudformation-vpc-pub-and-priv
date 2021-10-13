@@ -2,7 +2,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: >
-  Udacity 3-2-9 - Challenge 2
+  Udacity 3-3-9 - Challenge 2
   AWS CloudFormation script that creates VPC with Private and Public Subnet
 
 Parameters:
@@ -12,49 +12,157 @@ Parameters:
     Type: String
     Default: Default Environmnent Name
 
+  VpcCIDR: 
+    Description: The IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.0.0.0/16
+
+  PublicSubnetCIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.1.0/24
+
+  PrivateSubnetCIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.2.0/24
+
 Resources:
-  # Resources go here
+
   MainVPC:
     Type: AWS::EC2::VPC
     Properties:
-      # Properties go here
-  INternetGW:
-    Type: AWS::EC2::VPC
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      Tags: 
+        - Key: Name 
+          Value: !Ref EnvironmentName
+
+  InternetGW:
+    Type: AWS::EC2::InternetGateway
     Properties:
-      # Properties go here
-  MainVPC:
-    Type: AWS::EC2::VPC
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      # Properties go here
-  MainVPC:
-    Type: AWS::EC2::VPC
+      InternetGatewayId: !Ref InternetGW
+      VpcId: !Ref MainVPC
+
+  PublicSubnet1: 
+    Type: AWS::EC2::Subnet
     Properties:
-      # Properties go here
-  MainVPC:
-    Type: AWS::EC2::VPC
+      VpcId: !Ref MainVPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PublicSubnetCIDR
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
+
+  PrivateSubnet1: 
+    Type: AWS::EC2::Subnet
     Properties:
-      # Properties go here
-  MainVPC:
-    Type: AWS::EC2::VPC
+      VpcId: !Ref MainVPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PrivateSubnetCIDR
+      MapPublicIpOnLaunch: false
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
+
+  EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachInternetGateway
+    Properties: 
+      Domain: vpc
+
+  NAT:
+    Type: AWS::EC2::NatGateway
+    Properties: 
+      AllocationId: !GetAtt EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref MainVPC
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Public Routes
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref MainVPC
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Private Routes
+
+  AssociatePUBRT:
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      # Properties go here
-  MainVPC:
-    Type: AWS::EC2::VPC
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  AssociatePRIVRT:
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      # Properties go here
-  MainVPC:
-    Type: AWS::EC2::VPC
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1
+
+  PublicInternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachInternetGateway
     Properties:
-      # Properties go here
-  MainVPC:
-    Type: AWS::EC2::VPC
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0  # Things in here send to NAT Gateway1
+      GatewayId: !Ref InternetGW
+
+  PrivateInternetOutboundRoute:
+    Type: AWS::EC2::Route
     Properties:
-      # Properties go here
-  MainVPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      # Properties go here
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0  # Things in here send to NAT Gateway1
+      NatGatewayId: !Ref NAT
 
 Outputs: 
-  # Outputs go here
+
+  MainVPC: 
+    Description: A reference to the created VPC
+    Value: !Ref MainVPC
+    Export:
+      Name: !Sub ${EnvironmentName}-MainVPC-ID
+
+  InternetGW: 
+    Description: A reference to the created Internet Gateway
+    Value: !Ref InternetGW
+    Export:
+      Name: !Sub ${EnvironmentName}-InternetGW-ID
+
+  PublicSubnet1:
+    Description: Public Subnet 1
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub ${EnvironmentName}-PublicSubnet1-ID
+
+  PrivateSubnet1:
+    Description: Private Subnet 1
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub ${EnvironmentName}-PrivateSubnet1-ID
+
+  PublicRouteTable:
+    Description: Public Routing Table
+    Value: !Ref PublicRouteTable
+    Export:
+      Name: !Sub ${EnvironmentName}-PublicRouteTable-ID
+
+  PrivateRouteTable:
+    Description: Private Routing Table
+    Value: !Ref PrivateRouteTable
+    Export:
+      Name: !Sub ${EnvironmentName}-PrivateRouteTable-ID
 ...
