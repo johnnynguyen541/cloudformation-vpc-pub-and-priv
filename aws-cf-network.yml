@@ -2,7 +2,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: >
-  Udacity 3-3-9 - Challenge 2
   AWS CloudFormation script that creates VPC with Private and Public Subnet
 
 Parameters:

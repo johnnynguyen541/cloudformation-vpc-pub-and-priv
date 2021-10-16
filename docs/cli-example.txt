@@ -1,6 +1,6 @@
-# Create Stack Called "priv-pub-demo"
+# Create Network Stack Called "priv-pub-demo"
 
-$ ./create.sh priv-pub-demo vpc-pub-priv.yml vpc-pub-priv-parameters.json 
+$ ./create.sh priv-pub-demo aws-cf-network.yml aws-cf-network-parameters.json 
 Correct number of parameters
 StackId: arn:aws:cloudformation:us-west-2:268145795447:stack/priv-pub-demo/54aee850-2bfa-11ec-9094-0ab94e84fdab
 
