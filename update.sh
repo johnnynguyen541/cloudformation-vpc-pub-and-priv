@@ -14,12 +14,13 @@
 Check_Kwargs_Count () {
   args_count=$1
 
-  if [ ${args_count} -eq 3 ]
+  if [ ${args_count} -eq 4 ]
   then
     printf "Correct number of parameters\n"
   else
     printf "Incorrect number of parameters\n"
-    printf "Usage: ./update.sh [STACK_NAME] [TEMPLATE_FILE] [PARAMETERS_FILE]\n"
+    printf "Usage: ./update.sh [STACK_NAME] [TEMPLATE_FILE] [PARAMETERS_FILE] [REGION]\n"
+    printf "Example: ./update.sh aws-cf-network aws-cf-network.yml aws-cf-network-parameters.json us-west-2\n"
     exit 1
   fi
 }
@@ -27,9 +28,9 @@ Check_Kwargs_Count () {
 # Script Start
 Check_Kwargs_Count $#
 
-aws cloudformation update-stack \
+aws cloudformation create-stack \
 --stack-name $1 \
 --template-body file://$2 \
 --parameters file://$3 \
 --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" \
---region=us-west-2
+--region=$4

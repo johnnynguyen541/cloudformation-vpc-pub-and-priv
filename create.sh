@@ -14,12 +14,13 @@
 Check_Kwargs_Count () {
   args_count=$1
 
-  if [ ${args_count} -eq 3 ]
+  if [ ${args_count} -eq 4 ]
   then
     printf "Correct number of parameters\n"
   else
     printf "Incorrect number of parameters\n"
-    printf "Usage: ./create.sh [STACK_NAME] [TEMPLATE_FILE] [PARAMETERS_FILE]\n"
+    printf "Usage: ./create.sh [STACK_NAME] [TEMPLATE_FILE] [PARAMETERS_FILE] [REGION]\n"
+    printf "Example: ./create.sh aws-cf-network aws-cf-network.yml aws-cf-network-parameters.json us-west-2\n"
     exit 1
   fi
 }
@@ -32,4 +33,4 @@ aws cloudformation create-stack \
 --template-body file://$2 \
 --parameters file://$3 \
 --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" \
---region=us-west-2
+--region=$4
