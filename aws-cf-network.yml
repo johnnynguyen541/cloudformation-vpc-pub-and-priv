@@ -28,6 +28,7 @@ Parameters:
 
 Resources:
 
+  # Main VPC
   MainVPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -37,6 +38,7 @@ Resources:
         - Key: Name 
           Value: !Ref EnvironmentName
 
+  # Internet Gateway - In VPC
   InternetGW:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -50,7 +52,8 @@ Resources:
       InternetGatewayId: !Ref InternetGW
       VpcId: !Ref MainVPC
 
-  PublicSubnet1: 
+  # VPC Subnets
+  PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref MainVPC
@@ -61,7 +64,7 @@ Resources:
         - Key: Name 
           Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
 
-  PrivateSubnet1: 
+  PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref MainVPC
@@ -72,6 +75,7 @@ Resources:
         - Key: Name 
           Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
 
+  # Elastic IP = Depends on Internet Gateway, Attaches to NAT Gateway
   EIP:
     Type: AWS::EC2::EIP
     DependsOn: AttachInternetGateway
@@ -84,6 +88,7 @@ Resources:
       AllocationId: !GetAtt EIP.AllocationId
       SubnetId: !Ref PublicSubnet1
 
+  # Public Routing Table - sends 0.0.0.0/0 to Internet Gateway
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties: 
@@ -92,25 +97,11 @@ Resources:
         - Key: Name 
           Value: !Sub ${EnvironmentName} Public Routes
 
-  PrivateRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties: 
-      VpcId: !Ref MainVPC
-      Tags: 
-        - Key: Name 
-          Value: !Sub ${EnvironmentName} Private Routes
-
   AssociatePUBRT:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet1
-
-  AssociatePRIVRT:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable
-      SubnetId: !Ref PrivateSubnet1
 
   PublicInternetRoute:
     Type: AWS::EC2::Route
@@ -119,6 +110,21 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0  # Things in here send to NAT Gateway1
       GatewayId: !Ref InternetGW
+
+  # Private Routing Table - sends 0.0.0.0/0 to NAT Gateway
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref MainVPC
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${EnvironmentName} Private Routes
+
+  AssociatePRIVRT:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1
 
   PrivateInternetOutboundRoute:
     Type: AWS::EC2::Route
@@ -134,12 +140,6 @@ Outputs:
     Value: !Ref MainVPC
     Export:
       Name: !Sub ${EnvironmentName}-MainVPC-ID
-
-  InternetGW: 
-    Description: A reference to the created Internet Gateway
-    Value: !Ref InternetGW
-    Export:
-      Name: !Sub ${EnvironmentName}-InternetGW-ID
 
   PublicSubnet1:
     Description: Public Subnet 1

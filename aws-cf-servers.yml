@@ -11,8 +11,126 @@ Parameters:
     Type: String
     Default: Default Environmnent Name
 
+  VpcID:
+    Description: ID of the VPC to associate to
+    Type: String
+    Default: 
+      Fn::ImportValue:
+        !Sub "${EnvironmentName}-VPCID"
+
+  PublicSubnet1ID:
+    Description: Public Subnet 1 ID
+    Type: String
+    Default: 
+      Fn::ImportValue:
+        !Sub ${EnvironmentName}-PublicSubnet1-ID
+
+  PrivateSubnet1ID:
+    Description: Private Subnet 1 ID
+    Type: String
+    Default: 
+      Fn::ImportValue:
+        !Sub ${EnvironmentName}-PrivateSubnet1-ID
+
+  AmiIDPrivateImage:
+    Description: AMI ID of EC2 Instances
+    Type: String
+    Default: ami-013a129d325529d4d
+
+  AmiIDJumpBox:
+    Description: AMI ID of Jump Box
+    Type: String
+    Default: ami-013a129d325529d4d
+
+
 Resources:
-  # Resources go here
+  
+  # IAM role to allow EC2 Session Manager to access our server
+  #RoleForSSMAccess:
+  #  Type: "AWS::IAM::Role"
+  #  Properties:
+  #    AssumeRolePolicyDocument: TODO
+  #    Description: 
+  #    # Properties go here
+  #    Tags: 
+  #      - Key: "Name"
+  #        Value: !Sub ${EnvironmentName} IAM Role
+
+  # Intance Profile
+  #ServerInstanceProfile:
+  #  Type: "AWS::IAM::InstanceProfile"
+  #  Properties:
+      # Properties go here
+
+  # Webserver Security Group
+  WebAccessPrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP and SSH from local only
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80 
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+
+  # Server EC2 Instance
+  PrivateServerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiIDPrivateImage
+      InstanceType: t3.micro
+      NetworkInterfaces: 
+      - AssociatePublicIpAddress: "false"
+        DeviceIndex: "0"
+        GroupSet: 
+          - !Ref WebAccessPrivateSecurityGroup
+        SubnetId: !Ref PrivateSubnet1ID
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo yum update -y
+          sudo amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
+          sudo yum install -y httpd mariadb-server
+          sudo systemctl start httpd
+          sudo systemctl enable httpd
+          sudo chkconfig httpd on
+          sudo sed -i 's/Listen 80/Listen 8080/' /etc/httpd/conf/httpd.conf
+          sudo systemctl restart httpd
+          cd /var/www/html
+          echo "Demo Web Server Up and Running!" > index.html
+      Tags:
+        - Key: "Name"
+          Value: !Sub ${EnvironmentName} EC2 Instance
+
+  # LB Security Group
+
+  # Load Balancer
+
+  # LB - Listener
+
+  # LB - Listener Rule
+
+  # LB  - Target Group
+
+  # Jumpbox Security Group
+
+  # Jumpbox WebServer Group
+
+
+
+
 Outputs: 
   # Outputs go here
 ...

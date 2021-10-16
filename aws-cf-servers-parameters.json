@@ -1,6 +1,6 @@
 [
 	{
-		"ParameterKey": "Key",
-		"ParameterValue": "Value"
+		"ParameterKey": "EnvironmentName",
+		"ParameterValue": "Johnny-AWS-1"
 	}
 ]
