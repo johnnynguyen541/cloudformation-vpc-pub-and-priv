@@ -139,29 +139,29 @@ Outputs:
     Description: A reference to the created VPC
     Value: !Ref MainVPC
     Export:
-      Name: !Sub ${EnvironmentName}-MainVPC-ID
+      Name: !Sub ${EnvironmentName}-MainVPC
 
   PublicSubnet1:
     Description: Public Subnet 1
     Value: !Ref PublicSubnet1
     Export:
-      Name: !Sub ${EnvironmentName}-PublicSubnet1-ID
+      Name: !Sub ${EnvironmentName}-PublicSubnet1
 
   PrivateSubnet1:
     Description: Private Subnet 1
     Value: !Ref PrivateSubnet1
     Export:
-      Name: !Sub ${EnvironmentName}-PrivateSubnet1-ID
+      Name: !Sub ${EnvironmentName}-PrivateSubnet1
 
   PublicRouteTable:
     Description: Public Routing Table
     Value: !Ref PublicRouteTable
     Export:
-      Name: !Sub ${EnvironmentName}-PublicRouteTable-ID
+      Name: !Sub ${EnvironmentName}-PublicRouteTable
 
   PrivateRouteTable:
     Description: Private Routing Table
     Value: !Ref PrivateRouteTable
     Export:
-      Name: !Sub ${EnvironmentName}-PrivateRouteTable-ID
+      Name: !Sub ${EnvironmentName}-PrivateRouteTable
 ...

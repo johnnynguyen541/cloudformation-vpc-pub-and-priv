@@ -9,28 +9,22 @@ Parameters:
   EnvironmentName:
     Description: An environment name that will be prefixed to resource names
     Type: String
-    Default: Default Environmnent Name
+    Default: "Default Environmnent Name"
 
-  VpcID:
-    Description: ID of the VPC to associate to
-    Type: String
-    Default: 
-      Fn::ImportValue:
-        !Sub "${EnvironmentName}-VPCID"
+  #VpcID:
+  #  Description: ID of the VPC to associate to [Referenced from Network Script Exports]
+  #  Type: String
+  #  Default: !Sub "${EnvironmentName}-VPCID"
 
-  PublicSubnet1ID:
-    Description: Public Subnet 1 ID
-    Type: String
-    Default: 
-      Fn::ImportValue:
-        !Sub ${EnvironmentName}-PublicSubnet1-ID
+  #PublicSubnet1ID:
+  #  Description: Public Subnet 1 ID [Referenced from Network Script Exports]
+  #  Type: String
+  #  Default: !Sub "${EnvironmentName}-PublicSubnet1-ID"
 
-  PrivateSubnet1ID:
-    Description: Private Subnet 1 ID
-    Type: String
-    Default: 
-      Fn::ImportValue:
-        !Sub ${EnvironmentName}-PrivateSubnet1-ID
+  #PrivateSubnet1ID:
+  #  Description: Private Subnet 1 ID [Referenced from Network Script Exports]
+  #  Type: String
+  #  Default: !Sub "${EnvironmentName}-PrivateSubnet1-ID"
 
   AmiIDPrivateImage:
     Description: AMI ID of EC2 Instances
@@ -69,7 +63,7 @@ Resources:
       GroupDescription: Allow HTTP and SSH from local only
       VpcId:
         Fn::ImportValue:
-          !Sub "${EnvironmentName}-VPCID"
+          !Sub "${EnvironmentName}-MainVPC"  # NETWORK EXPORT
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 80
@@ -96,7 +90,9 @@ Resources:
         DeviceIndex: "0"
         GroupSet: 
           - !Ref WebAccessPrivateSecurityGroup
-        SubnetId: !Ref PrivateSubnet1ID
+        SubnetId:
+          Fn::ImportValue:
+            !Sub "${EnvironmentName}-PublicSubnet1"  # NETWORK EXPORT
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
@@ -112,7 +108,7 @@ Resources:
           echo "Demo Web Server Up and Running!" > index.html
       Tags:
         - Key: "Name"
-          Value: !Sub ${EnvironmentName} EC2 Instance
+          Value: !Sub ${EnvironmentName} Private EC2 Instance
 
   # LB Security Group
 
@@ -131,6 +127,6 @@ Resources:
 
 
 
-Outputs: 
+#Outputs: 
   # Outputs go here
 ...
