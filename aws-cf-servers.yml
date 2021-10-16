@@ -1,0 +1,18 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  Servers: EC2 instance on private subnet, with HTTP access via Load Balancer and SSH access via Jump Box
+
+Parameters:
+
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: Default Environmnent Name
+
+Resources:
+  # Resources go here
+Outputs: 
+  # Outputs go here
+...
