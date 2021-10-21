@@ -49,22 +49,28 @@ Parameters:
 
 Resources:
   
-  # IAM role to allow EC2 Session Manager to access our server
-  #RoleForSSMAccess:
-  #  Type: "AWS::IAM::Role"
-  #  Properties:
-  #    AssumeRolePolicyDocument: TODO
-  #    Description: 
-  #    # Properties go here
-  #    Tags: 
-  #      - Key: "Name"
-  #        Value: !Sub ${EnvironmentName} IAM Role
+  # IAM Role to allow EC2 Session Manager to access our server
+  RoleForSSMAccess: 
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 
-  # Intance Profile
-  #ServerInstanceProfile:
-  #  Type: "AWS::IAM::InstanceProfile"
-  #  Properties:
-      # Properties go here
+  # Instance Profile
+  ServerInstanceProfile: 
+    Type: "AWS::IAM::InstanceProfile"
+    Properties: 
+      Roles: 
+        - !Ref RoleForSSMAccess
 
   # Webserver Security Group
   WebAccessPrivateSecurityGroup:
@@ -97,6 +103,7 @@ Resources:
         - DeviceName: "/dev/sdk"
           Ebs:
             VolumeSize: '10'
+      IamInstanceProfile: !Ref ServerInstanceProfile
       ImageId: !Ref AmiIDPrivateImage
       InstanceType: t3.micro
       KeyName: !Ref PrivateEC2Key
@@ -135,24 +142,24 @@ Resources:
   #      Fn::ImportValue:
   #        !Sub "${EnvironmentName}-MainVPC"  # NETWORK EXPORT
   #    SecurityGroupIngress:
-  #    - IpProtocol: tcp
-  #      FromPort: 80
-  #      ToPort: 80
-  #      CidrIp: 0.0.0.0/0
+  #      - IpProtocol: tcp
+  #        FromPort: 80
+  #        ToPort: 80
+  #        CidrIp: 0.0.0.0/0
   #    SecurityGroupEgress:
-  #    - IpProtocol: tcp
-  #      FromPort: 80
-  #      ToPort: 80
-  #      CidrIp: 0.0.0.0/0
+  #      - IpProtocol: tcp
+  #        FromPort: 80
+  #        ToPort: 80
+  #        CidrIp: 0.0.0.0/0
 
   # Load Balancer
   #LBWebApp:
   #  Type: AWS::ElasticLoadBalancingV2::LoadBalancer
   #  Properties:
   #    Subnets:
-  #    - Fn::ImportValue: !Sub "${EnvironmentName}-PublicSubnet1"  # NETWORK EXPORT
+  #      - Fn::ImportValue: !Sub "${EnvironmentName}-PublicSubnet1"  # NETWORK EXPORT
   #    SecurityGroups:
-  #    - Ref: LBSecGroup
+  #      - Ref: LBSecGroup
 
   # LB - Listener
   #LBListener:
@@ -172,8 +179,6 @@ Resources:
   # LB - Target Group
 
   # Jumpbox Security Group
-
-  # Jumpbox WebServer Group
   JumpboxSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -194,7 +199,7 @@ Resources:
         - Key: "Name"
           Value: !Sub ${EnvironmentName} EC2 Security Group
 
-  # Server EC2 Instance
+  # Jumpbox EC2 Instance
   JumpboxInstance:
     Type: AWS::EC2::Instance
     Properties:
