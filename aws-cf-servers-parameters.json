@@ -1,6 +1,14 @@
 [
 	{
 		"ParameterKey": "EnvironmentName",
-		"ParameterValue": "Johnny-AWS-1"
+		"ParameterValue": "AWS-ENV"
+	},
+	{
+		"ParameterKey": "PrivateEC2Key",
+		"ParameterValue": "ud-fsjd-ec2"
+	},
+	{
+		"ParameterKey": "JumpboxKey",
+		"ParameterValue": "ud-fsjd-jumpbox"
 	}
 ]
