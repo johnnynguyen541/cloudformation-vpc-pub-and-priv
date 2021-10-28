@@ -3,7 +3,7 @@
 AWS CloudFormation scripts that creates Network and Servers:
 
 * Network: VPC with private and public subnet, and a NAT Gateway
-* Servers: EC2 instance on private subnet, with HTTP access via Load Balancer and SSH access via Jump Box
+* Servers: EC2 instances on private subnet with Autoscaling Group, with HTTP access via Load Balancer and SSH access via Jump Box
 
 ## Diagram
 
