@@ -7,7 +7,7 @@ AWS CloudFormation scripts that creates Network and Servers:
 
 ## Diagram
 
-![AWS CloudFormation - Diagram](https://github.com/johnnynguyen541/cloudformation-vpc-pub-and-priv/blob/main/docs/infrastructure-diagram.png?raw=true)
+![AWS CloudFormation - Diagram](https://github.com/johnnynguyen541/cloudformation-vpc-pub-and-priv/blob/auto-scaling/docs/infrastructure-diagram.png)
 
 ## Description
 
