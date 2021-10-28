@@ -14,27 +14,10 @@ Parameters:
   PrivateEC2Key: 
     Description: Key for Private EC2 Instance
     Type: String
-    Default: udacity-ed25519-key
   
   JumpboxKey: 
     Description: Key for Jumpbox EC2 Instance
     Type: String
-    Default: udacity-jumpbox
-
-  #VpcID:
-  #  Description: ID of the VPC to associate to [Referenced from Network Script Exports]
-  #  Type: String
-  #  Default: !Sub "${EnvironmentName}-VPCID"
-
-  #PublicSubnet1ID:
-  #  Description: Public Subnet 1 ID [Referenced from Network Script Exports]
-  #  Type: String
-  #  Default: !Sub "${EnvironmentName}-PublicSubnet1-ID"
-
-  #PrivateSubnet1ID:
-  #  Description: Private Subnet 1 ID [Referenced from Network Script Exports]
-  #  Type: String
-  #  Default: !Sub "${EnvironmentName}-PrivateSubnet1-ID"
 
   AmiIDPrivateImage:
     Description: AMI ID of EC2 Instances
@@ -49,7 +32,8 @@ Parameters:
 
 Resources:
   
-  # IAM Role to allow EC2 Session Manager to access our server
+  # IAM
+  # - Role: allow EC2 Session Manager Access
   RoleForSSMAccess: 
     Type: "AWS::IAM::Role"
     Properties:
@@ -65,59 +49,65 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 
-  # Instance Profile
+  # - Instance Profile
   ServerInstanceProfile: 
     Type: "AWS::IAM::InstanceProfile"
     Properties: 
       Roles: 
         - !Ref RoleForSSMAccess
 
-  # Webserver Security Group
-  WebAccessPrivateSecurityGroup:
+  # Security Groups
+  # - Load Balancer/Webservers
+  LBSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow HTTP and SSH from local only
+      GroupDescription: Allow HTTP to our load balancer
       VpcId:
         Fn::ImportValue:
-          !Sub "${EnvironmentName}-MainVPC"  # NETWORK EXPORT
+          !Sub "${EnvironmentName}-MainVPC"
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80 
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 0
-          ToPort: 65535
-          CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
 
-  # Server EC2 Instance
-  PrivateEC2Instance:
-    Type: AWS::EC2::Instance
+  # - Webservers in AutoScaling Group
+  WebServerSecGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      BlockDeviceMappings:
-        - DeviceName: "/dev/sdk"
-          Ebs:
-            VolumeSize: '10'
-      IamInstanceProfile: !Ref ServerInstanceProfile
-      ImageId: !Ref AmiIDPrivateImage
-      InstanceType: t3.micro
-      KeyName: !Ref PrivateEC2Key
-      NetworkInterfaces: 
-        - AssociatePublicIpAddress: "false"
-          DeviceIndex: "0"
-          GroupSet: 
-            - !Ref WebAccessPrivateSecurityGroup
-          SubnetId:
-            Fn::ImportValue:
-              !Sub "${EnvironmentName}-PrivateSubnet1"  # NETWORK EXPORT
-      Tags:
-        - Key: "Name"
-          Value: !Sub ${EnvironmentName} Private EC2 Instance
+      GroupDescription: Allow HTTP and SSH to WebServers, all traffic outbound
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${EnvironmentName}-MainVPC"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+
+  # Autoscaling
+  # - Launch Config for EC2 instances
+  WebAppLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
@@ -127,56 +117,86 @@ Resources:
           sudo systemctl start httpd
           sudo systemctl enable httpd
           sudo chkconfig httpd on
-          # sudo sed -i 's/Listen 80/Listen 8080/' /etc/httpd/conf/httpd.conf
           sudo systemctl restart httpd
           cd /var/www/html
-          echo "Demo Web Server Up and Running!" > index.html
-
-
-  # LB Security Group
-  #LBSecGroup:
-  #  Type: AWS::EC2::SecurityGroup
-  #  Properties:
-  #    GroupDescription: Allow http to our load balancer
-  #    VpcId:
-  #      Fn::ImportValue:
-  #        !Sub "${EnvironmentName}-MainVPC"  # NETWORK EXPORT
-  #    SecurityGroupIngress:
-  #      - IpProtocol: tcp
-  #        FromPort: 80
-  #        ToPort: 80
-  #        CidrIp: 0.0.0.0/0
-  #    SecurityGroupEgress:
-  #      - IpProtocol: tcp
-  #        FromPort: 80
-  #        ToPort: 80
-  #        CidrIp: 0.0.0.0/0
+          echo "Udacity Demo Web Server Up and Running!" > index.html
+      ImageId: !Ref AmiIDPrivateImage
+      IamInstanceProfile: !Ref ServerInstanceProfile
+      KeyName: !Ref PrivateEC2Key
+      SecurityGroups:
+      - Ref: WebServerSecGroup
+      InstanceType: t3.small
+      BlockDeviceMappings:
+      - DeviceName: "/dev/sdk"
+        Ebs:
+          VolumeSize: '10'
+  
+  # - Autoscaling Group
+  WebAppGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+      - Fn::ImportValue: 
+          !Sub "${EnvironmentName}-PRIV-NETS"
+      LaunchConfigurationName:
+        Ref: WebAppLaunchConfig
+      MinSize: '3'
+      MaxSize: '5'
+      TargetGroupARNs:
+      - Ref: WebAppTargetGroup
 
   # Load Balancer
-  #LBWebApp:
-  #  Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-  #  Properties:
-  #    Subnets:
-  #      - Fn::ImportValue: !Sub "${EnvironmentName}-PublicSubnet1"  # NETWORK EXPORT
-  #    SecurityGroups:
-  #      - Ref: LBSecGroup
+  # - Resource
+  WebAppLB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Subnets:
+      - Fn::ImportValue: !Sub "${EnvironmentName}-PRI1-SN"
+      - Fn::ImportValue: !Sub "${EnvironmentName}-PRI2-SN"
+      SecurityGroups:
+      - Ref: LBSecGroup
 
-  # LB - Listener
-  #LBListener:
-  #  Type: AWS::ElasticLoadBalancingV2::Listener
-  #  Properties:
-  #    DefaultActions:
-  #    - Type: forward
-  #      TargetGroupArn:
-  #        Ref: PrivateEC2Instance
-  #    LoadBalancerArn:
-  #      Ref: LBWebApp
-  #    Port: '80'
-  #    Protocol: HTTP
+  # - LB Listener
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: WebAppTargetGroup
+      LoadBalancerArn:
+        Ref: WebAppLB
+      Port: '80'
+      Protocol: HTTP
 
-  # LB - Listener Rule
+  # - LB Listener Rule
+  ALBListenerRule:
+      Type: AWS::ElasticLoadBalancingV2::ListenerRule
+      Properties:
+        Actions:
+        - Type: forward
+          TargetGroupArn: !Ref 'WebAppTargetGroup'
+        Conditions:
+        - Field: path-pattern
+          Values: [/]
+        ListenerArn: !Ref 'Listener'
+        Priority: 1
 
-  # LB - Target Group
+  # - Target Group
+  WebAppTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 8
+      HealthyThresholdCount: 2
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId: 
+        Fn::ImportValue:
+          Fn::Sub: "${EnvironmentName}-MainVPC"
 
   # Jumpbox Security Group
   JumpboxSecurityGroup:
@@ -199,14 +219,15 @@ Resources:
         - Key: "Name"
           Value: !Sub ${EnvironmentName} EC2 Security Group
 
-  # Jumpbox EC2 Instance
-  JumpboxInstance:
+  # Jumpbox EC2 Instances
+  JumpboxInstance1:
     Type: AWS::EC2::Instance
     Properties:
       BlockDeviceMappings:
         - DeviceName: "/dev/sdk"
           Ebs:
             VolumeSize: '10'
+      IamInstanceProfile: !Ref ServerInstanceProfile
       ImageId: !Ref AmiIDJumpBox
       InstanceType: t3.micro
       KeyName: !Ref JumpboxKey
@@ -217,14 +238,31 @@ Resources:
             - !Ref JumpboxSecurityGroup
           SubnetId:
             Fn::ImportValue:
-              !Sub "${EnvironmentName}-PublicSubnet1"  # NETWORK EXPORT
+              !Sub "${EnvironmentName}-PUB1-SN"  # NETWORK EXPORT
       Tags:
         - Key: "Name"
-          Value: !Sub ${EnvironmentName} Jumpbox EC2 Instance
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-          sudo echo "${PrivateEC2Instance.PrivateIp}    private-ec2" >> /etc/hosts
-#Outputs: 
-  # Outputs go here
+          Value: !Sub ${EnvironmentName} Jumpbox EC2 (AZ1)
+  
+  JumpboxInstance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sdk"
+          Ebs:
+            VolumeSize: '10'
+      IamInstanceProfile: !Ref ServerInstanceProfile
+      ImageId: !Ref AmiIDJumpBox
+      InstanceType: t3.micro
+      KeyName: !Ref JumpboxKey
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          GroupSet: 
+            - !Ref JumpboxSecurityGroup
+          SubnetId:
+            Fn::ImportValue:
+              !Sub "${EnvironmentName}-PUB2-SN"  # NETWORK EXPORT
+      Tags:
+        - Key: "Name"
+          Value: !Sub ${EnvironmentName} Jumpbox EC2 (AZ2)
 ...
